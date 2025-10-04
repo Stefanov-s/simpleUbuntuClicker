@@ -39,7 +39,16 @@ A lightweight, terminal-based autoclicker application for Ubuntu that performs m
 
 4. **Install required libraries**:
    ```bash
-   pip3 install -r requirements.txt
+   # Option 1: Try with --user flag first
+   pip3 install --user -r requirements.txt
+   
+   # Option 2: If that fails, use --break-system-packages
+   pip3 install --break-system-packages -r requirements.txt
+   
+   # Option 3: Use virtual environment (recommended)
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
    ```
 
 ## Usage
@@ -84,6 +93,9 @@ Press Ctrl+C to exit.
 - **Hotkeys not working**: Ensure you're in the input group and have rebooted
 - **Clicks not occurring**: Verify X11 session and mouse position
 - **Permission errors**: Check input group membership with `groups $USER`
+- **"Externally managed environment" error**: Use one of these solutions:
+  - `pip3 install --break-system-packages -r requirements.txt`
+  - Or use virtual environment: `python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt`
 - **Library issues**: Use a virtual environment: `python3 -m venv env && source env/bin/activate`
 
 ## Notes

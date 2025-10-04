@@ -44,8 +44,14 @@ fi
 # Install Python packages
 echo "Installing Python packages..."
 if command -v pip3 &> /dev/null; then
-    pip3 install --user pynput pyautogui
-    echo "Python packages installed - OK"
+    # Try to install with --user first, if that fails, use --break-system-packages
+    if pip3 install --user pynput pyautogui 2>/dev/null; then
+        echo "Python packages installed with --user - OK"
+    else
+        echo "Trying with --break-system-packages flag..."
+        pip3 install --break-system-packages pynput pyautogui
+        echo "Python packages installed with --break-system-packages - OK"
+    fi
 else
     echo "Error: pip3 not found. Please install python3-pip first."
     exit 1
