@@ -1,0 +1,49 @@
+Example Usage of Simple Autoclicker
+
+1. Basic Setup (run once):
+   ./setup.sh
+   # OR manually:
+   sudo usermod -aG input $USER
+   reboot
+   pip3 install pynput pyautogui
+
+2. Run the application:
+   python3 autoclicker.py
+
+3. Example session:
+   === Simple Autoclicker for Ubuntu ===
+   Press F1 to toggle primary clicker, F2 to toggle secondary clicker
+   Move mouse to top-left corner to stop the application
+
+   Enter minutes for primary clicker: 0
+   Enter seconds for primary clicker: 5
+   Enable secondary clicker? (y/n): y
+   Enter minutes for secondary clicker: 0
+   Enter seconds for secondary clicker: 30
+   Mouse position captured: (500, 300)
+
+   Autoclicker ready! Press F1 to start primary clicker.
+   Press F2 to start secondary clicker.
+   Press Ctrl+C to exit.
+
+4. Control:
+   - Press F1: Toggle primary clicker (every 5 seconds)
+   - Press F2: Toggle secondary clicker (every 30 seconds)
+   - Both clickers will sync at 30-second intervals
+   - Move mouse to top-left corner: Emergency stop
+   - Ctrl+C: Normal exit
+
+5. Expected output when running:
+   Primary clicker: ON
+   Primary click at 0.0s
+   Primary click at 5.0s
+   Primary click at 10.0s
+   Secondary clicker: ON
+   Primary click at 15.0s
+   Primary click at 20.0s
+   Primary click at 25.0s
+   Secondary click at 30.0s
+   Primary click at 30.0s
+   Primary click at 35.0s
+   ...
+
