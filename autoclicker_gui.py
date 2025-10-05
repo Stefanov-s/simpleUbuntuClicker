@@ -478,8 +478,8 @@ class AutoclickerGUI:
         self.secondary_controls_frame.columnconfigure(1, weight=1)
         
         # Secondary interval
-        ttk.Label(self.secondary_controls_frame, text="Interval (seconds):").grid(row=0, column=0, sticky=tk.W, padx=(0, 10))
-        self.secondary_interval_var = tk.StringVar(value="30")
+        ttk.Label(self.secondary_controls_frame, text="Delta from Primary (seconds):").grid(row=0, column=0, sticky=tk.W, padx=(0, 10))
+        self.secondary_interval_var = tk.StringVar(value="1")
         self.secondary_spinbox = ttk.Spinbox(self.secondary_controls_frame, from_=1, to=3600, width=10,
                                            textvariable=self.secondary_interval_var)
         self.secondary_spinbox.grid(row=0, column=1, sticky=tk.W)
@@ -517,8 +517,8 @@ class AutoclickerGUI:
         self.tertiary_controls_frame.columnconfigure(1, weight=1)
         
         # Tertiary interval
-        ttk.Label(self.tertiary_controls_frame, text="Interval (seconds):").grid(row=0, column=0, sticky=tk.W, padx=(0, 10))
-        self.tertiary_interval_var = tk.StringVar(value="60")
+        ttk.Label(self.tertiary_controls_frame, text="Delta from Primary (seconds):").grid(row=0, column=0, sticky=tk.W, padx=(0, 10))
+        self.tertiary_interval_var = tk.StringVar(value="2")
         self.tertiary_spinbox = ttk.Spinbox(self.tertiary_controls_frame, from_=1, to=3600, width=10,
                                           textvariable=self.tertiary_interval_var)
         self.tertiary_spinbox.grid(row=0, column=1, sticky=tk.W)
@@ -684,7 +684,9 @@ class AutoclickerGUI:
             if self.start_time is not None:
                 current_time = time.time()
                 elapsed = current_time - self.start_time
-                if elapsed % self.secondary_interval < 0.1 and elapsed - last_click_time >= self.secondary_interval * 0.9:
+                # Secondary clicks based on primary timing + delta
+                primary_cycle_time = elapsed % self.primary_interval
+                if primary_cycle_time >= self.secondary_interval and primary_cycle_time - last_click_time >= self.secondary_interval * 0.9:
                     if self.secondary_use_coordinates:
                         # Use fixed coordinates
                         pyautogui.click(self.secondary_click_x, self.secondary_click_y)
@@ -694,7 +696,7 @@ class AutoclickerGUI:
                         current_x, current_y = pyautogui.position()
                         pyautogui.click(current_x, current_y)
                         self.root.after(0, lambda: self.log_message(f"Secondary click at {elapsed:.1f}s at mouse position ({current_x}, {current_y})"))
-                    last_click_time = elapsed
+                    last_click_time = primary_cycle_time
             time.sleep(0.01)
     
     def tertiary_click_thread(self):
@@ -704,7 +706,9 @@ class AutoclickerGUI:
             if self.start_time is not None:
                 current_time = time.time()
                 elapsed = current_time - self.start_time
-                if elapsed % self.tertiary_interval < 0.1 and elapsed - last_click_time >= self.tertiary_interval * 0.9:
+                # Tertiary clicks based on primary timing + delta
+                primary_cycle_time = elapsed % self.primary_interval
+                if primary_cycle_time >= self.tertiary_interval and primary_cycle_time - last_click_time >= self.tertiary_interval * 0.9:
                     if self.tertiary_use_coordinates:
                         # Use fixed coordinates
                         pyautogui.click(self.tertiary_click_x, self.tertiary_click_y)
@@ -714,7 +718,7 @@ class AutoclickerGUI:
                         current_x, current_y = pyautogui.position()
                         pyautogui.click(current_x, current_y)
                         self.root.after(0, lambda: self.log_message(f"Tertiary click at {elapsed:.1f}s at mouse position ({current_x}, {current_y})"))
-                    last_click_time = elapsed
+                    last_click_time = primary_cycle_time
             time.sleep(0.01)
     
     def update_stop_all_button(self):
