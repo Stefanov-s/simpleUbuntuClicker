@@ -54,15 +54,31 @@ class AutoclickerGUI:
         self.create_widgets()
         self.setup_keyboard_listener()
         
+        # Recorder variables
+        self.recording = False
+        self.playing = False
+        self.recorded_clicks = []
+        self.replay_count = 1
+        self.current_replay = 0
+        self.recorder_thread = None
+        
     def create_widgets(self):
         """Create and layout GUI widgets."""
+        # Create notebook for tabs
+        self.notebook = ttk.Notebook(self.root)
+        self.notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Create tabs
+        self.create_clicker_tab()
+        self.create_recorder_tab()
+        
+    def create_clicker_tab(self):
+        """Create the main autoclicker tab."""
         # Main frame
-        main_frame = ttk.Frame(self.root, padding="10")
-        main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        main_frame = ttk.Frame(self.notebook, padding="10")
+        self.notebook.add(main_frame, text="Autoclicker")
         
         # Configure grid weights
-        self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(1, weight=1)
         
         # Title
@@ -185,6 +201,98 @@ class AutoclickerGUI:
             self.log_message("Move mouse to top-left corner for emergency stop")
         else:
             self.log_message("Use Stop All button or close window to stop")
+    
+    def create_recorder_tab(self):
+        """Create the recorder tab."""
+        # Main frame
+        recorder_frame = ttk.Frame(self.notebook, padding="10")
+        self.notebook.add(recorder_frame, text="Recorder")
+        
+        # Configure grid weights
+        recorder_frame.columnconfigure(1, weight=1)
+        
+        # Title
+        title_label = ttk.Label(recorder_frame, text="Click Sequence Recorder", 
+                               font=("Arial", 16, "bold"))
+        title_label.grid(row=0, column=0, columnspan=3, pady=(0, 20))
+        
+        # Recording Section
+        record_frame = ttk.LabelFrame(recorder_frame, text="Recording", padding="10")
+        record_frame.grid(row=1, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 10))
+        record_frame.columnconfigure(1, weight=1)
+        
+        # Record button
+        self.record_button = ttk.Button(record_frame, text="Start Recording", 
+                                      command=self.toggle_recording)
+        self.record_button.grid(row=0, column=0, sticky=tk.W, padx=(0, 10))
+        
+        # Recording status
+        self.recording_status_var = tk.StringVar(value="Not Recording")
+        self.recording_status_label = ttk.Label(record_frame, textvariable=self.recording_status_var,
+                                               font=("Arial", 12, "bold"))
+        self.recording_status_label.grid(row=0, column=1, sticky=tk.W)
+        
+        # Clear button
+        self.clear_button = ttk.Button(record_frame, text="Clear Sequence", 
+                                      command=self.clear_sequence, state="disabled")
+        self.clear_button.grid(row=0, column=2, sticky=tk.E)
+        
+        # Sequence display
+        seq_frame = ttk.LabelFrame(recorder_frame, text="Recorded Sequence", padding="10")
+        seq_frame.grid(row=2, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 10))
+        seq_frame.columnconfigure(0, weight=1)
+        
+        self.sequence_text = tk.Text(seq_frame, height=8, width=60, wrap=tk.WORD, state="disabled")
+        self.sequence_text.grid(row=0, column=0, sticky=(tk.W, tk.E))
+        
+        # Scrollbar for sequence text
+        seq_scrollbar = ttk.Scrollbar(seq_frame, orient=tk.VERTICAL, command=self.sequence_text.yview)
+        seq_scrollbar.grid(row=0, column=1, sticky=(tk.N, tk.S))
+        self.sequence_text.configure(yscrollcommand=seq_scrollbar.set)
+        
+        # Playback Section
+        playback_frame = ttk.LabelFrame(recorder_frame, text="Playback", padding="10")
+        playback_frame.grid(row=3, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 10))
+        playback_frame.columnconfigure(1, weight=1)
+        
+        # Repeat count
+        ttk.Label(playback_frame, text="Repeat Count:").grid(row=0, column=0, sticky=tk.W, padx=(0, 10))
+        self.repeat_var = tk.StringVar(value="1")
+        repeat_spinbox = ttk.Spinbox(playback_frame, from_=1, to=1000, width=10,
+                                    textvariable=self.repeat_var)
+        repeat_spinbox.grid(row=0, column=1, sticky=tk.W)
+        
+        # Play button
+        self.play_button = ttk.Button(playback_frame, text="Play Sequence", 
+                                    command=self.toggle_playback, state="disabled")
+        self.play_button.grid(row=0, column=2, sticky=tk.E, padx=(10, 0))
+        
+        # Playback status
+        self.playback_status_var = tk.StringVar(value="Ready")
+        self.playback_status_label = ttk.Label(playback_frame, textvariable=self.playback_status_var,
+                                             font=("Arial", 12, "bold"))
+        self.playback_status_label.grid(row=1, column=0, columnspan=3, sticky=tk.W, pady=(10, 0))
+        
+        # Progress bar
+        self.progress_var = tk.StringVar(value="")
+        self.progress_label = ttk.Label(playback_frame, textvariable=self.progress_var,
+                                      font=("Arial", 10))
+        self.progress_label.grid(row=2, column=0, columnspan=3, sticky=tk.W, pady=(5, 0))
+        
+        # Instructions
+        instructions_frame = ttk.Frame(recorder_frame)
+        instructions_frame.grid(row=4, column=0, columnspan=3, pady=(20, 0))
+        
+        instructions_text = ttk.Label(instructions_frame, 
+                                     text="Instructions: 1) Click 'Start Recording' 2) Perform your click sequence 3) Click 'Stop Recording' 4) Set repeat count 5) Click 'Play Sequence'",
+                                     font=("Arial", 9), foreground="gray")
+        instructions_text.pack()
+        
+        # Hotkey info
+        hotkey_text = ttk.Label(instructions_frame, 
+                               text="Hotkeys: F3 = Start/Stop Recording, F4 = Start/Stop Playback",
+                               font=("Arial", 9), foreground="blue")
+        hotkey_text.pack()
         
     def setup_keyboard_listener(self):
         """Setup keyboard listener for F1/F2 hotkeys."""
@@ -203,6 +311,10 @@ class AutoclickerGUI:
                 self.root.after(0, self.toggle_primary)
             elif key == keyboard.Key.f2 and self.secondary_enabled_var.get():
                 self.root.after(0, self.toggle_secondary)
+            elif key == keyboard.Key.f3:
+                self.root.after(0, self.toggle_recording)
+            elif key == keyboard.Key.f4:
+                self.root.after(0, self.toggle_playback)
         except AttributeError:
             pass
     
@@ -430,11 +542,172 @@ class AutoclickerGUI:
         self.status_text.insert(tk.END, f"[{timestamp}] {message}\n")
         self.status_text.see(tk.END)
     
+    def toggle_recording(self):
+        """Toggle recording on/off."""
+        if not self.recording:
+            self.start_recording()
+        else:
+            self.stop_recording()
+    
+    def start_recording(self):
+        """Start recording clicks."""
+        self.recording = True
+        self.recorded_clicks = []
+        self.recording_status_var.set("Recording...")
+        self.recording_status_label.configure(foreground="red")
+        self.record_button.configure(text="Stop Recording")
+        self.clear_button.configure(state="disabled")
+        self.play_button.configure(state="disabled")
+        
+        # Clear sequence display
+        self.sequence_text.configure(state="normal")
+        self.sequence_text.delete(1.0, tk.END)
+        self.sequence_text.insert(tk.END, "Recording... Click anywhere to record clicks.\n")
+        self.sequence_text.configure(state="disabled")
+        
+        self.log_message("Recording started - click anywhere to record")
+        
+        # Start mouse listener for recording
+        self.start_click_listener()
+    
+    def stop_recording(self):
+        """Stop recording clicks."""
+        self.recording = False
+        self.recording_status_var.set("Recording Stopped")
+        self.recording_status_label.configure(foreground="green")
+        self.record_button.configure(text="Start Recording")
+        self.clear_button.configure(state="normal")
+        
+        if self.recorded_clicks:
+            self.play_button.configure(state="normal")
+            self.update_sequence_display()
+            self.log_message(f"Recording stopped - {len(self.recorded_clicks)} clicks recorded")
+        else:
+            self.log_message("Recording stopped - no clicks recorded")
+    
+    def start_click_listener(self):
+        """Start listening for clicks to record."""
+        def on_click(x, y, button, pressed):
+            if pressed and self.recording:
+                click_time = time.time()
+                self.recorded_clicks.append({
+                    'x': x, 'y': y, 'button': str(button), 'time': click_time
+                })
+                self.log_message(f"Recorded click at ({x}, {y})")
+        
+        from pynput import mouse
+        self.click_listener = mouse.Listener(on_click=on_click)
+        self.click_listener.start()
+    
+    def update_sequence_display(self):
+        """Update the sequence display."""
+        self.sequence_text.configure(state="normal")
+        self.sequence_text.delete(1.0, tk.END)
+        
+        if not self.recorded_clicks:
+            self.sequence_text.insert(tk.END, "No clicks recorded.")
+        else:
+            self.sequence_text.insert(tk.END, f"Recorded {len(self.recorded_clicks)} clicks:\n\n")
+            for i, click in enumerate(self.recorded_clicks):
+                self.sequence_text.insert(tk.END, f"{i+1}. Click at ({click['x']}, {click['y']}) - {click['button']}\n")
+        
+        self.sequence_text.configure(state="disabled")
+    
+    def clear_sequence(self):
+        """Clear the recorded sequence."""
+        self.recorded_clicks = []
+        self.sequence_text.configure(state="normal")
+        self.sequence_text.delete(1.0, tk.END)
+        self.sequence_text.insert(tk.END, "Sequence cleared.")
+        self.sequence_text.configure(state="disabled")
+        self.play_button.configure(state="disabled")
+        self.log_message("Sequence cleared")
+    
+    def toggle_playback(self):
+        """Toggle playback on/off."""
+        if not self.playing:
+            self.start_playback()
+        else:
+            self.stop_playback()
+    
+    def start_playback(self):
+        """Start playing the recorded sequence."""
+        if not self.recorded_clicks:
+            messagebox.showerror("Error", "No sequence recorded to play!")
+            return
+        
+        try:
+            self.replay_count = int(self.repeat_var.get())
+        except ValueError:
+            messagebox.showerror("Error", "Please enter a valid repeat count!")
+            return
+        
+        self.playing = True
+        self.current_replay = 0
+        self.play_button.configure(text="Stop Playback")
+        self.record_button.configure(state="disabled")
+        self.clear_button.configure(state="disabled")
+        
+        self.log_message(f"Starting playback - {self.replay_count} repetitions")
+        
+        # Start playback thread
+        self.recorder_thread = threading.Thread(target=self.playback_thread, daemon=True)
+        self.recorder_thread.start()
+    
+    def stop_playback(self):
+        """Stop playing the recorded sequence."""
+        self.playing = False
+        self.play_button.configure(text="Play Sequence")
+        self.record_button.configure(state="normal")
+        self.clear_button.configure(state="normal")
+        self.playback_status_var.set("Stopped")
+        self.progress_var.set("")
+        self.log_message("Playback stopped")
+    
+    def playback_thread(self):
+        """Thread function for playing back recorded sequence."""
+        for replay in range(self.replay_count):
+            if not self.playing:
+                break
+            
+            self.current_replay = replay + 1
+            self.root.after(0, lambda: self.playback_status_var.set(f"Playing... ({self.current_replay}/{self.replay_count})"))
+            self.root.after(0, lambda: self.progress_var.set(f"Replay {self.current_replay} of {self.replay_count}"))
+            
+            # Play the sequence
+            for i, click in enumerate(self.recorded_clicks):
+                if not self.playing:
+                    break
+                
+                # Wait for the timing (if not first click)
+                if i > 0:
+                    time_diff = click['time'] - self.recorded_clicks[i-1]['time']
+                    if time_diff > 0:
+                        time.sleep(time_diff)
+                
+                # Perform the click
+                pyautogui.click(click['x'], click['y'])
+                self.root.after(0, lambda i=i: self.log_message(f"Playback click {i+1} at ({self.recorded_clicks[i]['x']}, {self.recorded_clicks[i]['y']})"))
+            
+            # Wait between repetitions (if not last)
+            if replay < self.replay_count - 1:
+                time.sleep(0.5)  # Small delay between repetitions
+        
+        # Playback finished
+        self.root.after(0, self.stop_playback)
+        self.root.after(0, lambda: self.log_message("Playback completed"))
+    
     def on_closing(self):
         """Handle window closing."""
         self.stop_all()
+        if self.recording:
+            self.stop_recording()
+        if self.playing:
+            self.stop_playback()
         if self.keyboard_listener:
             self.keyboard_listener.stop()
+        if hasattr(self, 'click_listener') and self.click_listener:
+            self.click_listener.stop()
         self.root.destroy()
 
 def main():
