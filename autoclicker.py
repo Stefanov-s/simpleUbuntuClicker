@@ -72,18 +72,34 @@ def get_user_input():
         else:
             print("Please enter 'y' or 'n'.")
 
-def click_thread(interval, active_flag_ref, clicker_name):
-    """Thread function for autoclicker."""
+def primary_click_thread():
+    """Thread function for primary autoclicker."""
+    global first_clicker_active, start_time, mouse_x, mouse_y
     last_click_time = 0
     while True:
-        if active_flag_ref[0] and start_time is not None:
+        if first_clicker_active and start_time is not None:
             current_time = time.time()
             elapsed = current_time - start_time
             # Only click if enough time has passed since last click
-            if elapsed % interval < 0.1 and elapsed - last_click_time >= interval * 0.9:
+            if elapsed % primary_interval < 0.1 and elapsed - last_click_time >= primary_interval * 0.9:
                 pyautogui.click(mouse_x, mouse_y)
                 last_click_time = elapsed
-                print(f"{clicker_name} click at {elapsed:.1f}s")
+                print(f"Primary click at {elapsed:.1f}s")
+        time.sleep(0.01)
+
+def secondary_click_thread():
+    """Thread function for secondary autoclicker."""
+    global second_clicker_active, start_time, mouse_x, mouse_y
+    last_click_time = 0
+    while True:
+        if second_clicker_active and start_time is not None:
+            current_time = time.time()
+            elapsed = current_time - start_time
+            # Only click if enough time has passed since last click
+            if elapsed % secondary_interval < 0.1 and elapsed - last_click_time >= secondary_interval * 0.9:
+                pyautogui.click(mouse_x, mouse_y)
+                last_click_time = elapsed
+                print(f"Secondary click at {elapsed:.1f}s")
         time.sleep(0.01)
 
 def on_key_press(key):
@@ -123,16 +139,12 @@ def main():
     get_user_input()
     
     # Create and start threads
-    primary_thread = threading.Thread(target=click_thread, 
-                                    args=(primary_interval, [first_clicker_active], "Primary"),
-                                    daemon=True)
+    primary_thread = threading.Thread(target=primary_click_thread, daemon=True)
     primary_thread.start()
     
     secondary_thread = None
     if secondary_interval is not None:
-        secondary_thread = threading.Thread(target=click_thread,
-                                          args=(secondary_interval, [second_clicker_active], "Secondary"),
-                                          daemon=True)
+        secondary_thread = threading.Thread(target=secondary_click_thread, daemon=True)
         secondary_thread.start()
     
     # Start keyboard listener
