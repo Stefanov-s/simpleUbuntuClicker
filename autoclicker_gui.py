@@ -670,8 +670,14 @@ class AutoclickerGUI:
                         try:
                             if hasattr(self, 'root') and self.root.winfo_exists():
                                 self.root.after(0, lambda: self.log_message(f"DEBUG: Using coordinates ({self.primary_click_x}, {self.primary_click_y})"))
-                            pyautogui.click(self.primary_click_x, self.primary_click_y)
+                            # Try clicking at the coordinates
                             if hasattr(self, 'root') and self.root.winfo_exists():
+                                self.root.after(0, lambda: self.log_message(f"DEBUG: About to click at ({self.primary_click_x}, {self.primary_click_y})"))
+                            # Try moving to coordinates first, then clicking
+                            pyautogui.moveTo(self.primary_click_x, self.primary_click_y)
+                            pyautogui.click()
+                            if hasattr(self, 'root') and self.root.winfo_exists():
+                                self.root.after(0, lambda: self.log_message(f"DEBUG: Click executed at ({self.primary_click_x}, {self.primary_click_y})"))
                                 self.root.after(0, lambda: self.log_message(f"Primary click at {elapsed:.1f}s at fixed coordinates ({self.primary_click_x}, {self.primary_click_y})"))
                         except Exception as e:
                             if hasattr(self, 'root') and self.root.winfo_exists():
