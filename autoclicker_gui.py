@@ -14,7 +14,7 @@ from pynput import keyboard
 import pyautogui
 
 # Configure pyautogui
-pyautogui.FAILSAFE = True
+pyautogui.FAILSAFE = False  # Disable failsafe to prevent interruptions
 pyautogui.PAUSE = 0.01
 
 class AutoclickerGUI:
@@ -699,13 +699,23 @@ class AutoclickerGUI:
                 if elapsed % self.secondary_interval < 0.1 and elapsed - last_click_time >= self.secondary_interval * 0.9:
                     if self.secondary_use_coordinates:
                         # Use fixed coordinates
-                        pyautogui.click(self.secondary_click_x, self.secondary_click_y)
-                        self.root.after(0, lambda: self.log_message(f"Secondary click at {elapsed:.1f}s at fixed coordinates ({self.secondary_click_x}, {self.secondary_click_y})"))
+                        try:
+                            pyautogui.click(self.secondary_click_x, self.secondary_click_y)
+                            if hasattr(self, 'root') and self.root.winfo_exists():
+                                self.root.after(0, lambda: self.log_message(f"Secondary click at {elapsed:.1f}s at fixed coordinates ({self.secondary_click_x}, {self.secondary_click_y})"))
+                        except Exception as e:
+                            if hasattr(self, 'root') and self.root.winfo_exists():
+                                self.root.after(0, lambda: self.log_message(f"Error in secondary click: {e}"))
                     else:
                         # Use current mouse position
-                        current_x, current_y = pyautogui.position()
-                        pyautogui.click(current_x, current_y)
-                        self.root.after(0, lambda: self.log_message(f"Secondary click at {elapsed:.1f}s at mouse position ({current_x}, {current_y})"))
+                        try:
+                            current_x, current_y = pyautogui.position()
+                            pyautogui.click(current_x, current_y)
+                            if hasattr(self, 'root') and self.root.winfo_exists():
+                                self.root.after(0, lambda: self.log_message(f"Secondary click at {elapsed:.1f}s at mouse position ({current_x}, {current_y})"))
+                        except Exception as e:
+                            if hasattr(self, 'root') and self.root.winfo_exists():
+                                self.root.after(0, lambda: self.log_message(f"Error in secondary click: {e}"))
                     last_click_time = elapsed
             time.sleep(0.01)
     
@@ -719,13 +729,23 @@ class AutoclickerGUI:
                 if elapsed % self.tertiary_interval < 0.1 and elapsed - last_click_time >= self.tertiary_interval * 0.9:
                     if self.tertiary_use_coordinates:
                         # Use fixed coordinates
-                        pyautogui.click(self.tertiary_click_x, self.tertiary_click_y)
-                        self.root.after(0, lambda: self.log_message(f"Tertiary click at {elapsed:.1f}s at fixed coordinates ({self.tertiary_click_x}, {self.tertiary_click_y})"))
+                        try:
+                            pyautogui.click(self.tertiary_click_x, self.tertiary_click_y)
+                            if hasattr(self, 'root') and self.root.winfo_exists():
+                                self.root.after(0, lambda: self.log_message(f"Tertiary click at {elapsed:.1f}s at fixed coordinates ({self.tertiary_click_x}, {self.tertiary_click_y})"))
+                        except Exception as e:
+                            if hasattr(self, 'root') and self.root.winfo_exists():
+                                self.root.after(0, lambda: self.log_message(f"Error in tertiary click: {e}"))
                     else:
                         # Use current mouse position
-                        current_x, current_y = pyautogui.position()
-                        pyautogui.click(current_x, current_y)
-                        self.root.after(0, lambda: self.log_message(f"Tertiary click at {elapsed:.1f}s at mouse position ({current_x}, {current_y})"))
+                        try:
+                            current_x, current_y = pyautogui.position()
+                            pyautogui.click(current_x, current_y)
+                            if hasattr(self, 'root') and self.root.winfo_exists():
+                                self.root.after(0, lambda: self.log_message(f"Tertiary click at {elapsed:.1f}s at mouse position ({current_x}, {current_y})"))
+                        except Exception as e:
+                            if hasattr(self, 'root') and self.root.winfo_exists():
+                                self.root.after(0, lambda: self.log_message(f"Error in tertiary click: {e}"))
                     last_click_time = elapsed
             time.sleep(0.01)
     
