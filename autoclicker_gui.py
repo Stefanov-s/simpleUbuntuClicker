@@ -42,6 +42,14 @@ class AutoclickerGUI:
         self.secondary_thread = None
         self.keyboard_listener = None
         
+        # Coordinate settings
+        self.primary_use_coordinates = False
+        self.secondary_use_coordinates = False
+        self.primary_click_x = 0
+        self.primary_click_y = 0
+        self.secondary_click_x = 0
+        self.secondary_click_y = 0
+        
         # Create GUI
         self.create_widgets()
         self.setup_keyboard_listener()
@@ -74,15 +82,32 @@ class AutoclickerGUI:
                                     textvariable=self.primary_interval_var)
         primary_spinbox.grid(row=0, column=1, sticky=tk.W)
         
+        # Primary coordinate settings
+        coord_frame = ttk.Frame(primary_frame)
+        coord_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(10, 0))
+        
+        self.primary_coord_var = tk.BooleanVar()
+        coord_check = ttk.Checkbutton(coord_frame, text="Use fixed coordinates instead of mouse position",
+                                     variable=self.primary_coord_var, command=self.toggle_primary_coords)
+        coord_check.grid(row=0, column=0, sticky=tk.W)
+        
+        self.primary_coord_button = ttk.Button(coord_frame, text="Click to Set Coordinates", 
+                                             command=self.set_primary_coordinates, state="disabled")
+        self.primary_coord_button.grid(row=0, column=1, sticky=tk.E, padx=(10, 0))
+        
+        self.primary_coord_label = ttk.Label(coord_frame, text="Coordinates: Not set", 
+                                           font=("Arial", 9), foreground="gray")
+        self.primary_coord_label.grid(row=1, column=0, columnspan=2, sticky=tk.W, pady=(5, 0))
+        
         # Primary status and control
         self.primary_status_var = tk.StringVar(value="OFF")
         self.primary_status_label = ttk.Label(primary_frame, textvariable=self.primary_status_var, 
                                               font=("Arial", 12, "bold"))
-        self.primary_status_label.grid(row=1, column=0, sticky=tk.W, pady=(10, 0))
+        self.primary_status_label.grid(row=2, column=0, sticky=tk.W, pady=(10, 0))
         
         self.primary_button = ttk.Button(primary_frame, text="Start Primary", 
                                         command=self.toggle_primary)
-        self.primary_button.grid(row=1, column=1, sticky=tk.E, pady=(10, 0))
+        self.primary_button.grid(row=2, column=1, sticky=tk.E, pady=(10, 0))
         
         # Secondary Clicker Section
         secondary_frame = ttk.LabelFrame(main_frame, text="Secondary Clicker", padding="10")
@@ -103,15 +128,32 @@ class AutoclickerGUI:
                                            textvariable=self.secondary_interval_var, state="disabled")
         self.secondary_spinbox.grid(row=1, column=1, sticky=tk.W)
         
+        # Secondary coordinate settings
+        sec_coord_frame = ttk.Frame(secondary_frame)
+        sec_coord_frame.grid(row=2, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(10, 0))
+        
+        self.secondary_coord_var = tk.BooleanVar()
+        sec_coord_check = ttk.Checkbutton(sec_coord_frame, text="Use fixed coordinates instead of mouse position",
+                                        variable=self.secondary_coord_var, command=self.toggle_secondary_coords)
+        sec_coord_check.grid(row=0, column=0, sticky=tk.W)
+        
+        self.secondary_coord_button = ttk.Button(sec_coord_frame, text="Click to Set Coordinates", 
+                                               command=self.set_secondary_coordinates, state="disabled")
+        self.secondary_coord_button.grid(row=0, column=1, sticky=tk.E, padx=(10, 0))
+        
+        self.secondary_coord_label = ttk.Label(sec_coord_frame, text="Coordinates: Not set", 
+                                             font=("Arial", 9), foreground="gray")
+        self.secondary_coord_label.grid(row=1, column=0, columnspan=2, sticky=tk.W, pady=(5, 0))
+        
         # Secondary status and control
         self.secondary_status_var = tk.StringVar(value="OFF")
         self.secondary_status_label = ttk.Label(secondary_frame, textvariable=self.secondary_status_var,
                                                font=("Arial", 12, "bold"))
-        self.secondary_status_label.grid(row=2, column=0, sticky=tk.W, pady=(10, 0))
+        self.secondary_status_label.grid(row=3, column=0, sticky=tk.W, pady=(10, 0))
         
         self.secondary_button = ttk.Button(secondary_frame, text="Start Secondary",
                                          command=self.toggle_secondary, state="disabled")
-        self.secondary_button.grid(row=2, column=1, sticky=tk.E, pady=(10, 0))
+        self.secondary_button.grid(row=3, column=1, sticky=tk.E, pady=(10, 0))
         
         # Control Section
         control_frame = ttk.Frame(main_frame)
@@ -268,6 +310,64 @@ class AutoclickerGUI:
             self.secondary_button.configure(state="disabled")
             self.log_message("Secondary clicker disabled")
     
+    def toggle_primary_coords(self):
+        """Toggle primary coordinate mode."""
+        self.primary_use_coordinates = self.primary_coord_var.get()
+        if self.primary_use_coordinates:
+            self.primary_coord_button.configure(state="normal")
+            self.log_message("Primary clicker: Coordinate mode enabled")
+        else:
+            self.primary_coord_button.configure(state="disabled")
+            self.log_message("Primary clicker: Mouse tracking mode")
+    
+    def toggle_secondary_coords(self):
+        """Toggle secondary coordinate mode."""
+        self.secondary_use_coordinates = self.secondary_coord_var.get()
+        if self.secondary_use_coordinates:
+            self.secondary_coord_button.configure(state="normal")
+            self.log_message("Secondary clicker: Coordinate mode enabled")
+        else:
+            self.secondary_coord_button.configure(state="disabled")
+            self.log_message("Secondary clicker: Mouse tracking mode")
+    
+    def set_primary_coordinates(self):
+        """Set primary clicker coordinates by clicking."""
+        self.root.withdraw()  # Hide window
+        self.log_message("Click anywhere to set primary coordinates...")
+        
+        def on_click(x, y, button, pressed):
+            if pressed:
+                self.primary_click_x = x
+                self.primary_click_y = y
+                self.primary_coord_label.configure(text=f"Coordinates: ({x}, {y})", foreground="green")
+                self.log_message(f"Primary coordinates set to ({x}, {y})")
+                self.root.deiconify()  # Show window again
+                return False  # Stop listener
+        
+        # Start mouse listener
+        from pynput import mouse
+        listener = mouse.Listener(on_click=on_click)
+        listener.start()
+    
+    def set_secondary_coordinates(self):
+        """Set secondary clicker coordinates by clicking."""
+        self.root.withdraw()  # Hide window
+        self.log_message("Click anywhere to set secondary coordinates...")
+        
+        def on_click(x, y, button, pressed):
+            if pressed:
+                self.secondary_click_x = x
+                self.secondary_click_y = y
+                self.secondary_coord_label.configure(text=f"Coordinates: ({x}, {y})", foreground="green")
+                self.log_message(f"Secondary coordinates set to ({x}, {y})")
+                self.root.deiconify()  # Show window again
+                return False  # Stop listener
+        
+        # Start mouse listener
+        from pynput import mouse
+        listener = mouse.Listener(on_click=on_click)
+        listener.start()
+    
     def stop_all(self):
         """Stop all clickers."""
         if self.primary_active:
@@ -285,10 +385,16 @@ class AutoclickerGUI:
                 current_time = time.time()
                 elapsed = current_time - self.start_time
                 if elapsed % self.primary_interval < 0.1 and elapsed - last_click_time >= self.primary_interval * 0.9:
-                    current_x, current_y = pyautogui.position()
-                    pyautogui.click(current_x, current_y)
+                    if self.primary_use_coordinates:
+                        # Use fixed coordinates
+                        pyautogui.click(self.primary_click_x, self.primary_click_y)
+                        self.root.after(0, lambda: self.log_message(f"Primary click at {elapsed:.1f}s at fixed coordinates ({self.primary_click_x}, {self.primary_click_y})"))
+                    else:
+                        # Use current mouse position
+                        current_x, current_y = pyautogui.position()
+                        pyautogui.click(current_x, current_y)
+                        self.root.after(0, lambda: self.log_message(f"Primary click at {elapsed:.1f}s at mouse position ({current_x}, {current_y})"))
                     last_click_time = elapsed
-                    self.root.after(0, lambda: self.log_message(f"Primary click at {elapsed:.1f}s at ({current_x}, {current_y})"))
             time.sleep(0.01)
     
     def secondary_click_thread(self):
@@ -299,10 +405,16 @@ class AutoclickerGUI:
                 current_time = time.time()
                 elapsed = current_time - self.start_time
                 if elapsed % self.secondary_interval < 0.1 and elapsed - last_click_time >= self.secondary_interval * 0.9:
-                    current_x, current_y = pyautogui.position()
-                    pyautogui.click(current_x, current_y)
+                    if self.secondary_use_coordinates:
+                        # Use fixed coordinates
+                        pyautogui.click(self.secondary_click_x, self.secondary_click_y)
+                        self.root.after(0, lambda: self.log_message(f"Secondary click at {elapsed:.1f}s at fixed coordinates ({self.secondary_click_x}, {self.secondary_click_y})"))
+                    else:
+                        # Use current mouse position
+                        current_x, current_y = pyautogui.position()
+                        pyautogui.click(current_x, current_y)
+                        self.root.after(0, lambda: self.log_message(f"Secondary click at {elapsed:.1f}s at mouse position ({current_x}, {current_y})"))
                     last_click_time = elapsed
-                    self.root.after(0, lambda: self.log_message(f"Secondary click at {elapsed:.1f}s at ({current_x}, {current_y})"))
             time.sleep(0.01)
     
     def update_stop_all_button(self):
