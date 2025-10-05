@@ -163,7 +163,12 @@ class AutoclickerGUI:
         # Stop all button
         self.stop_all_button = ttk.Button(control_frame, text="Stop All", 
                                          command=self.stop_all, state="disabled")
-        self.stop_all_button.pack(side=tk.LEFT)
+        self.stop_all_button.pack(side=tk.LEFT, padx=(0, 10))
+        
+        # Reset all button
+        self.reset_all_button = ttk.Button(control_frame, text="Reset All", 
+                                         command=self.reset_all)
+        self.reset_all_button.pack(side=tk.LEFT)
         
         # Status Section
         status_frame = ttk.LabelFrame(main_frame, text="Status", padding="10")
@@ -220,7 +225,12 @@ class AutoclickerGUI:
         # Clear button
         self.clear_button = ttk.Button(record_frame, text="Clear Sequence", 
                                       command=self.clear_sequence, state="disabled")
-        self.clear_button.grid(row=0, column=2, sticky=tk.E)
+        self.clear_button.grid(row=0, column=2, sticky=tk.E, padx=(0, 10))
+        
+        # Reset recorder button
+        self.reset_recorder_button = ttk.Button(record_frame, text="Reset Recorder", 
+                                             command=self.reset_recorder)
+        self.reset_recorder_button.grid(row=0, column=3, sticky=tk.E)
         
         
         # Sequence display
@@ -654,6 +664,71 @@ class AutoclickerGUI:
         if self.tertiary_active:
             self.stop_tertiary()
         self.log_message("All clickers stopped")
+    
+    def reset_all(self):
+        """Reset all clickers to default values."""
+        # Stop all clickers first
+        self.stop_all()
+        
+        # Reset primary clicker
+        self.primary_interval_var.set("5")
+        self.primary_coord_var.set(False)
+        self.primary_coord_button.configure(state="disabled")
+        self.primary_coord_label.configure(text="Coordinates: Not set", foreground="gray")
+        self.primary_click_x = 0
+        self.primary_click_y = 0
+        
+        # Reset and hide secondary clicker
+        self.secondary_enabled_var.set(False)
+        self.hide_secondary_controls()
+        if hasattr(self, 'secondary_interval_var'):
+            self.secondary_interval_var.set("30")
+        if hasattr(self, 'secondary_coord_var'):
+            self.secondary_coord_var.set(False)
+        self.secondary_click_x = 0
+        self.secondary_click_y = 0
+        
+        # Reset and hide tertiary clicker
+        self.tertiary_enabled_var.set(False)
+        self.hide_tertiary_controls()
+        if hasattr(self, 'tertiary_interval_var'):
+            self.tertiary_interval_var.set("60")
+        if hasattr(self, 'tertiary_coord_var'):
+            self.tertiary_coord_var.set(False)
+        self.tertiary_click_x = 0
+        self.tertiary_click_y = 0
+        
+        # Reset coordinate flags
+        self.primary_use_coordinates = False
+        self.secondary_use_coordinates = False
+        self.tertiary_use_coordinates = False
+        
+        self.log_message("All clickers reset to default values")
+    
+    def reset_recorder(self):
+        """Reset recorder to default values."""
+        # Stop recording and playback if active
+        if self.recording:
+            self.stop_recording()
+        if self.playing:
+            self.stop_playback()
+        
+        # Reset values
+        self.repeat_var.set("1")
+        self.replay_interval_var.set("0")
+        
+        # Clear sequence
+        self.recorded_clicks = []
+        self.sequence_text.configure(state="normal")
+        self.sequence_text.delete(1.0, tk.END)
+        self.sequence_text.insert(tk.END, "Recorder reset - ready for new sequence.")
+        self.sequence_text.configure(state="disabled")
+        
+        # Reset buttons
+        self.play_button.configure(state="disabled")
+        self.clear_button.configure(state="disabled")
+        
+        self.log_message("Recorder reset to default values")
     
     
     def primary_click_thread(self):
