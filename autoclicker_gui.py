@@ -21,8 +21,11 @@ class AutoclickerGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Simple Autoclicker for Ubuntu")
-        self.root.geometry("600x500")
+        self.root.geometry("550x550")
         self.root.resizable(True, True)
+        
+        # Make window always on top
+        self.root.attributes('-topmost', True)
         
         # Detect platform
         self.platform = platform.system().lower()
