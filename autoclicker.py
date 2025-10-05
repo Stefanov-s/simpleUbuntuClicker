@@ -106,6 +106,9 @@ def on_key_press(key):
     """Handle key press events."""
     global first_clicker_active, second_clicker_active, start_time
     
+    # Debug: Print what key was pressed
+    print(f"Key pressed: {key}")
+    
     try:
         if key == keyboard.Key.f1:
             first_clicker_active = not first_clicker_active
