@@ -35,20 +35,26 @@ class AutoclickerGUI:
         # Variables
         self.primary_active = False
         self.secondary_active = False
+        self.tertiary_active = False
         self.start_time = None
         self.primary_interval = 5  # seconds
         self.secondary_interval = 30  # seconds
+        self.tertiary_interval = 60  # seconds
         self.primary_thread = None
         self.secondary_thread = None
+        self.tertiary_thread = None
         self.keyboard_listener = None
         
         # Coordinate settings
         self.primary_use_coordinates = False
         self.secondary_use_coordinates = False
+        self.tertiary_use_coordinates = False
         self.primary_click_x = 0
         self.primary_click_y = 0
         self.secondary_click_x = 0
         self.secondary_click_y = 0
+        self.tertiary_click_x = 0
+        self.tertiary_click_y = 0
         
         # Create GUI
         self.create_widgets()
@@ -86,94 +92,48 @@ class AutoclickerGUI:
                                font=("Arial", 16, "bold"))
         title_label.grid(row=0, column=0, columnspan=3, pady=(0, 20))
         
-        # Primary Clicker Section
-        primary_frame = ttk.LabelFrame(main_frame, text="Primary Clicker", padding="10")
-        primary_frame.grid(row=1, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 10))
-        primary_frame.columnconfigure(1, weight=1)
+        # Clicker Controls (Compact)
+        controls_frame = ttk.LabelFrame(main_frame, text="Clicker Controls", padding="10")
+        controls_frame.grid(row=1, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 10))
+        controls_frame.columnconfigure(1, weight=1)
         
-        # Primary interval
-        ttk.Label(primary_frame, text="Interval (seconds):").grid(row=0, column=0, sticky=tk.W, padx=(0, 10))
-        self.primary_interval_var = tk.StringVar(value="5")
-        primary_spinbox = ttk.Spinbox(primary_frame, from_=1, to=3600, width=10, 
-                                    textvariable=self.primary_interval_var)
-        primary_spinbox.grid(row=0, column=1, sticky=tk.W)
+        # Primary Clicker (Always visible)
+        primary_row = ttk.Frame(controls_frame)
+        primary_row.grid(row=0, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 5))
+        primary_row.columnconfigure(1, weight=1)
         
-        # Primary coordinate settings
-        coord_frame = ttk.Frame(primary_frame)
-        coord_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(10, 0))
-        
-        self.primary_coord_var = tk.BooleanVar()
-        coord_check = ttk.Checkbutton(coord_frame, text="Use fixed coordinates instead of mouse position",
-                                     variable=self.primary_coord_var, command=self.toggle_primary_coords)
-        coord_check.grid(row=0, column=0, sticky=tk.W)
-        
-        self.primary_coord_button = ttk.Button(coord_frame, text="Click to Set Coordinates", 
-                                             command=self.set_primary_coordinates, state="disabled")
-        self.primary_coord_button.grid(row=0, column=1, sticky=tk.E, padx=(10, 0))
-        
-        self.primary_coord_label = ttk.Label(coord_frame, text="Coordinates: Not set", 
-                                           font=("Arial", 9), foreground="gray")
-        self.primary_coord_label.grid(row=1, column=0, columnspan=2, sticky=tk.W, pady=(5, 0))
-        
-        # Primary status and control
         self.primary_status_var = tk.StringVar(value="OFF")
-        self.primary_status_label = ttk.Label(primary_frame, textvariable=self.primary_status_var, 
+        self.primary_status_label = ttk.Label(primary_row, textvariable=self.primary_status_var, 
                                               font=("Arial", 12, "bold"))
-        self.primary_status_label.grid(row=2, column=0, sticky=tk.W, pady=(10, 0))
+        self.primary_status_label.grid(row=0, column=0, sticky=tk.W)
         
-        self.primary_button = ttk.Button(primary_frame, text="Start Primary", 
+        self.primary_button = ttk.Button(primary_row, text="Start Primary", 
                                         command=self.toggle_primary)
-        self.primary_button.grid(row=2, column=1, sticky=tk.E, pady=(10, 0))
+        self.primary_button.grid(row=0, column=1, sticky=tk.E, padx=(10, 0))
         
-        # Secondary Clicker Section
-        secondary_frame = ttk.LabelFrame(main_frame, text="Secondary Clicker", padding="10")
-        secondary_frame.grid(row=2, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 10))
-        secondary_frame.columnconfigure(1, weight=1)
-        
-        # Secondary enable checkbox
+        # Secondary Clicker (Collapsible)
         self.secondary_enabled_var = tk.BooleanVar()
-        secondary_check = ttk.Checkbutton(secondary_frame, text="Enable Secondary Clicker",
-                                        variable=self.secondary_enabled_var,
-                                        command=self.toggle_secondary_enable)
-        secondary_check.grid(row=0, column=0, columnspan=2, sticky=tk.W)
+        self.secondary_check = ttk.Checkbutton(controls_frame, text="Enable Secondary Clicker",
+                                             variable=self.secondary_enabled_var,
+                                             command=self.toggle_secondary_enable)
+        self.secondary_check.grid(row=1, column=0, columnspan=3, sticky=tk.W, pady=(10, 0))
         
-        # Secondary interval (initially disabled)
-        ttk.Label(secondary_frame, text="Interval (seconds):").grid(row=1, column=0, sticky=tk.W, padx=(0, 10))
-        self.secondary_interval_var = tk.StringVar(value="30")
-        self.secondary_spinbox = ttk.Spinbox(secondary_frame, from_=1, to=3600, width=10,
-                                           textvariable=self.secondary_interval_var, state="disabled")
-        self.secondary_spinbox.grid(row=1, column=1, sticky=tk.W)
+        # Secondary controls (hidden by default)
+        self.secondary_controls_frame = ttk.Frame(controls_frame)
         
-        # Secondary coordinate settings
-        sec_coord_frame = ttk.Frame(secondary_frame)
-        sec_coord_frame.grid(row=2, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(10, 0))
+        # Tertiary Clicker (Collapsible)
+        self.tertiary_enabled_var = tk.BooleanVar()
+        self.tertiary_check = ttk.Checkbutton(controls_frame, text="Enable Tertiary Clicker",
+                                            variable=self.tertiary_enabled_var,
+                                            command=self.toggle_tertiary_enable)
+        self.tertiary_check.grid(row=2, column=0, columnspan=3, sticky=tk.W, pady=(10, 0))
         
-        self.secondary_coord_var = tk.BooleanVar()
-        sec_coord_check = ttk.Checkbutton(sec_coord_frame, text="Use fixed coordinates instead of mouse position",
-                                        variable=self.secondary_coord_var, command=self.toggle_secondary_coords)
-        sec_coord_check.grid(row=0, column=0, sticky=tk.W)
-        
-        self.secondary_coord_button = ttk.Button(sec_coord_frame, text="Click to Set Coordinates", 
-                                               command=self.set_secondary_coordinates, state="disabled")
-        self.secondary_coord_button.grid(row=0, column=1, sticky=tk.E, padx=(10, 0))
-        
-        self.secondary_coord_label = ttk.Label(sec_coord_frame, text="Coordinates: Not set", 
-                                             font=("Arial", 9), foreground="gray")
-        self.secondary_coord_label.grid(row=1, column=0, columnspan=2, sticky=tk.W, pady=(5, 0))
-        
-        # Secondary status and control
-        self.secondary_status_var = tk.StringVar(value="OFF")
-        self.secondary_status_label = ttk.Label(secondary_frame, textvariable=self.secondary_status_var,
-                                               font=("Arial", 12, "bold"))
-        self.secondary_status_label.grid(row=3, column=0, sticky=tk.W, pady=(10, 0))
-        
-        self.secondary_button = ttk.Button(secondary_frame, text="Start Secondary",
-                                         command=self.toggle_secondary, state="disabled")
-        self.secondary_button.grid(row=3, column=1, sticky=tk.E, pady=(10, 0))
+        # Tertiary controls (hidden by default)
+        self.tertiary_controls_frame = ttk.Frame(controls_frame)
         
         # Control Section
         control_frame = ttk.Frame(main_frame)
-        control_frame.grid(row=3, column=0, columnspan=3, pady=(20, 0))
+        control_frame.grid(row=2, column=0, columnspan=3, pady=(20, 0))
         
         # Stop all button
         self.stop_all_button = ttk.Button(control_frame, text="Stop All", 
@@ -291,7 +251,7 @@ class AutoclickerGUI:
         
         # Hotkey info
         hotkey_text = ttk.Label(instructions_frame, 
-                               text="Hotkeys: F3 = Start/Stop Recording, F4 = Start/Stop Playback (Ubuntu optimized)",
+                               text="Hotkeys: F1=Primary, F2=Secondary, F3=Tertiary, F4=Recording, F5=Playback (Ubuntu optimized)",
                                font=("Arial", 9), foreground="blue")
         hotkey_text.pack()
         
@@ -312,9 +272,11 @@ class AutoclickerGUI:
                 self.root.after(0, self.toggle_primary)
             elif key == keyboard.Key.f2 and self.secondary_enabled_var.get():
                 self.root.after(0, self.toggle_secondary)
-            elif key == keyboard.Key.f3:
-                self.root.after(0, self.toggle_recording)
+            elif key == keyboard.Key.f3 and self.tertiary_enabled_var.get():
+                self.root.after(0, self.toggle_tertiary)
             elif key == keyboard.Key.f4:
+                self.root.after(0, self.toggle_recording)
+            elif key == keyboard.Key.f5:
                 self.root.after(0, self.toggle_playback)
         except AttributeError:
             pass
@@ -410,18 +372,159 @@ class AutoclickerGUI:
         self.log_message("Secondary clicker stopped")
         self.update_stop_all_button()
     
+    def toggle_tertiary(self):
+        """Toggle tertiary clicker on/off."""
+        if not self.tertiary_active:
+            self.start_tertiary()
+        else:
+            self.stop_tertiary()
+    
+    def start_tertiary(self):
+        """Start tertiary clicker."""
+        try:
+            self.tertiary_interval = int(self.tertiary_interval_var.get())
+            if self.tertiary_interval <= 0:
+                messagebox.showerror("Error", "Interval must be greater than 0")
+                return
+        except ValueError:
+            messagebox.showerror("Error", "Please enter a valid number for interval")
+            return
+        
+        self.tertiary_active = True
+        if self.start_time is None:
+            self.start_time = time.time()
+        self.tertiary_status_var.set("ON")
+        self.tertiary_status_label.configure(foreground="green")
+        self.tertiary_button.configure(text="Stop Tertiary")
+        
+        # Start tertiary thread
+        self.tertiary_thread = threading.Thread(target=self.tertiary_click_thread, daemon=True)
+        self.tertiary_thread.start()
+        
+        self.log_message("Tertiary clicker started")
+        self.update_stop_all_button()
+    
+    def stop_tertiary(self):
+        """Stop tertiary clicker."""
+        self.tertiary_active = False
+        self.tertiary_status_var.set("OFF")
+        self.tertiary_status_label.configure(foreground="red")
+        self.tertiary_button.configure(text="Start Tertiary")
+        
+        # Reset start_time if no clickers are active
+        if not self.primary_active and not self.secondary_active:
+            self.start_time = None
+        
+        self.log_message("Tertiary clicker stopped")
+        self.update_stop_all_button()
+    
     def toggle_secondary_enable(self):
         """Enable/disable secondary clicker controls."""
         if self.secondary_enabled_var.get():
-            self.secondary_spinbox.configure(state="normal")
-            self.secondary_button.configure(state="normal")
+            self.create_secondary_controls()
             self.log_message("Secondary clicker enabled")
         else:
             if self.secondary_active:
                 self.stop_secondary()
-            self.secondary_spinbox.configure(state="disabled")
-            self.secondary_button.configure(state="disabled")
+            self.hide_secondary_controls()
             self.log_message("Secondary clicker disabled")
+    
+    def toggle_tertiary_enable(self):
+        """Enable/disable tertiary clicker controls."""
+        if self.tertiary_enabled_var.get():
+            self.create_tertiary_controls()
+            self.log_message("Tertiary clicker enabled")
+        else:
+            if self.tertiary_active:
+                self.stop_tertiary()
+            self.hide_tertiary_controls()
+            self.log_message("Tertiary clicker disabled")
+    
+    def create_secondary_controls(self):
+        """Create secondary clicker controls."""
+        self.secondary_controls_frame.grid(row=1, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(5, 0))
+        self.secondary_controls_frame.columnconfigure(1, weight=1)
+        
+        # Secondary interval
+        ttk.Label(self.secondary_controls_frame, text="Interval (seconds):").grid(row=0, column=0, sticky=tk.W, padx=(0, 10))
+        self.secondary_interval_var = tk.StringVar(value="30")
+        self.secondary_spinbox = ttk.Spinbox(self.secondary_controls_frame, from_=1, to=3600, width=10,
+                                           textvariable=self.secondary_interval_var)
+        self.secondary_spinbox.grid(row=0, column=1, sticky=tk.W)
+        
+        # Secondary coordinate settings
+        sec_coord_frame = ttk.Frame(self.secondary_controls_frame)
+        sec_coord_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(5, 0))
+        
+        self.secondary_coord_var = tk.BooleanVar()
+        sec_coord_check = ttk.Checkbutton(sec_coord_frame, text="Use fixed coordinates",
+                                        variable=self.secondary_coord_var, command=self.toggle_secondary_coords)
+        sec_coord_check.grid(row=0, column=0, sticky=tk.W)
+        
+        self.secondary_coord_button = ttk.Button(sec_coord_frame, text="Set Coordinates", 
+                                               command=self.set_secondary_coordinates, state="disabled")
+        self.secondary_coord_button.grid(row=0, column=1, sticky=tk.E, padx=(10, 0))
+        
+        self.secondary_coord_label = ttk.Label(sec_coord_frame, text="Coordinates: Not set", 
+                                             font=("Arial", 9), foreground="gray")
+        self.secondary_coord_label.grid(row=1, column=0, columnspan=2, sticky=tk.W, pady=(2, 0))
+        
+        # Secondary status and control
+        self.secondary_status_var = tk.StringVar(value="OFF")
+        self.secondary_status_label = ttk.Label(self.secondary_controls_frame, textvariable=self.secondary_status_var,
+                                               font=("Arial", 12, "bold"))
+        self.secondary_status_label.grid(row=2, column=0, sticky=tk.W, pady=(5, 0))
+        
+        self.secondary_button = ttk.Button(self.secondary_controls_frame, text="Start Secondary",
+                                         command=self.toggle_secondary)
+        self.secondary_button.grid(row=2, column=1, sticky=tk.E, pady=(5, 0))
+    
+    def create_tertiary_controls(self):
+        """Create tertiary clicker controls."""
+        self.tertiary_controls_frame.grid(row=2, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(5, 0))
+        self.tertiary_controls_frame.columnconfigure(1, weight=1)
+        
+        # Tertiary interval
+        ttk.Label(self.tertiary_controls_frame, text="Interval (seconds):").grid(row=0, column=0, sticky=tk.W, padx=(0, 10))
+        self.tertiary_interval_var = tk.StringVar(value="60")
+        self.tertiary_spinbox = ttk.Spinbox(self.tertiary_controls_frame, from_=1, to=3600, width=10,
+                                          textvariable=self.tertiary_interval_var)
+        self.tertiary_spinbox.grid(row=0, column=1, sticky=tk.W)
+        
+        # Tertiary coordinate settings
+        tert_coord_frame = ttk.Frame(self.tertiary_controls_frame)
+        tert_coord_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(5, 0))
+        
+        self.tertiary_coord_var = tk.BooleanVar()
+        tert_coord_check = ttk.Checkbutton(tert_coord_frame, text="Use fixed coordinates",
+                                         variable=self.tertiary_coord_var, command=self.toggle_tertiary_coords)
+        tert_coord_check.grid(row=0, column=0, sticky=tk.W)
+        
+        self.tertiary_coord_button = ttk.Button(tert_coord_frame, text="Set Coordinates", 
+                                              command=self.set_tertiary_coordinates, state="disabled")
+        self.tertiary_coord_button.grid(row=0, column=1, sticky=tk.E, padx=(10, 0))
+        
+        self.tertiary_coord_label = ttk.Label(tert_coord_frame, text="Coordinates: Not set", 
+                                            font=("Arial", 9), foreground="gray")
+        self.tertiary_coord_label.grid(row=1, column=0, columnspan=2, sticky=tk.W, pady=(2, 0))
+        
+        # Tertiary status and control
+        self.tertiary_status_var = tk.StringVar(value="OFF")
+        self.tertiary_status_label = ttk.Label(self.tertiary_controls_frame, textvariable=self.tertiary_status_var,
+                                              font=("Arial", 12, "bold"))
+        self.tertiary_status_label.grid(row=2, column=0, sticky=tk.W, pady=(5, 0))
+        
+        self.tertiary_button = ttk.Button(self.tertiary_controls_frame, text="Start Tertiary",
+                                        command=self.toggle_tertiary)
+        self.tertiary_button.grid(row=2, column=1, sticky=tk.E, pady=(5, 0))
+    
+    def hide_secondary_controls(self):
+        """Hide secondary clicker controls."""
+        self.secondary_controls_frame.grid_remove()
+    
+    def hide_tertiary_controls(self):
+        """Hide tertiary clicker controls."""
+        self.tertiary_controls_frame.grid_remove()
     
     def toggle_primary_coords(self):
         """Toggle primary coordinate mode."""
@@ -442,6 +545,16 @@ class AutoclickerGUI:
         else:
             self.secondary_coord_button.configure(state="disabled")
             self.log_message("Secondary clicker: Mouse tracking mode")
+    
+    def toggle_tertiary_coords(self):
+        """Toggle tertiary coordinate mode."""
+        self.tertiary_use_coordinates = self.tertiary_coord_var.get()
+        if self.tertiary_use_coordinates:
+            self.tertiary_coord_button.configure(state="normal")
+            self.log_message("Tertiary clicker: Coordinate mode enabled")
+        else:
+            self.tertiary_coord_button.configure(state="disabled")
+            self.log_message("Tertiary clicker: Mouse tracking mode")
     
     def set_primary_coordinates(self):
         """Set primary clicker coordinates by clicking."""
@@ -472,7 +585,26 @@ class AutoclickerGUI:
                 self.secondary_click_x = x
                 self.secondary_click_y = y
                 self.secondary_coord_label.configure(text=f"Coordinates: ({x}, {y})", foreground="green")
-                self.log_message(f"Secondary coordinates set to ({x}, {y})")
+        self.log_message(f"Secondary coordinates set to ({x}, {y})")
+        self.root.deiconify()  # Show window again
+        return False  # Stop listener
+    
+    # Start mouse listener
+    from pynput import mouse
+    listener = mouse.Listener(on_click=on_click)
+    listener.start()
+    
+    def set_tertiary_coordinates(self):
+        """Set tertiary clicker coordinates by clicking."""
+        self.root.withdraw()  # Hide window
+        self.log_message("Click anywhere to set tertiary coordinates...")
+        
+        def on_click(x, y, button, pressed):
+            if pressed:
+                self.tertiary_click_x = x
+                self.tertiary_click_y = y
+                self.tertiary_coord_label.configure(text=f"Coordinates: ({x}, {y})", foreground="green")
+                self.log_message(f"Tertiary coordinates set to ({x}, {y})")
                 self.root.deiconify()  # Show window again
                 return False  # Stop listener
         
@@ -487,6 +619,8 @@ class AutoclickerGUI:
             self.stop_primary()
         if self.secondary_active:
             self.stop_secondary()
+        if self.tertiary_active:
+            self.stop_tertiary()
         self.log_message("All clickers stopped")
     
     
@@ -530,9 +664,29 @@ class AutoclickerGUI:
                     last_click_time = elapsed
             time.sleep(0.01)
     
+    def tertiary_click_thread(self):
+        """Thread function for tertiary autoclicker."""
+        last_click_time = 0
+        while self.tertiary_active:
+            if self.start_time is not None:
+                current_time = time.time()
+                elapsed = current_time - self.start_time
+                if elapsed % self.tertiary_interval < 0.1 and elapsed - last_click_time >= self.tertiary_interval * 0.9:
+                    if self.tertiary_use_coordinates:
+                        # Use fixed coordinates
+                        pyautogui.click(self.tertiary_click_x, self.tertiary_click_y)
+                        self.root.after(0, lambda: self.log_message(f"Tertiary click at {elapsed:.1f}s at fixed coordinates ({self.tertiary_click_x}, {self.tertiary_click_y})"))
+                    else:
+                        # Use current mouse position
+                        current_x, current_y = pyautogui.position()
+                        pyautogui.click(current_x, current_y)
+                        self.root.after(0, lambda: self.log_message(f"Tertiary click at {elapsed:.1f}s at mouse position ({current_x}, {current_y})"))
+                    last_click_time = elapsed
+            time.sleep(0.01)
+    
     def update_stop_all_button(self):
         """Update stop all button state."""
-        if self.primary_active or self.secondary_active:
+        if self.primary_active or self.secondary_active or self.tertiary_active:
             self.stop_all_button.configure(state="normal")
         else:
             self.stop_all_button.configure(state="disabled")
