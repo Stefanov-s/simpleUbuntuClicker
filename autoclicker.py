@@ -72,11 +72,11 @@ def get_user_input():
         else:
             print("Please enter 'y' or 'n'.")
 
-def click_thread(interval, active_flag, clicker_name):
+def click_thread(interval, active_flag_ref, clicker_name):
     """Thread function for autoclicker."""
     last_click_time = 0
     while True:
-        if active_flag[0] and start_time is not None:
+        if active_flag_ref[0] and start_time is not None:
             current_time = time.time()
             elapsed = current_time - start_time
             # Only click if enough time has passed since last click
