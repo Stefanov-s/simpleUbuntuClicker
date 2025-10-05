@@ -667,14 +667,25 @@ class AutoclickerGUI:
                 if elapsed % self.primary_interval < 0.1 and elapsed - last_click_time >= self.primary_interval * 0.9:
                     if self.primary_use_coordinates:
                         # Use fixed coordinates
-                        self.root.after(0, lambda: self.log_message(f"DEBUG: Using coordinates ({self.primary_click_x}, {self.primary_click_y})"))
-                        pyautogui.click(self.primary_click_x, self.primary_click_y)
-                        self.root.after(0, lambda: self.log_message(f"Primary click at {elapsed:.1f}s at fixed coordinates ({self.primary_click_x}, {self.primary_click_y})"))
+                        try:
+                            if hasattr(self, 'root') and self.root.winfo_exists():
+                                self.root.after(0, lambda: self.log_message(f"DEBUG: Using coordinates ({self.primary_click_x}, {self.primary_click_y})"))
+                            pyautogui.click(self.primary_click_x, self.primary_click_y)
+                            if hasattr(self, 'root') and self.root.winfo_exists():
+                                self.root.after(0, lambda: self.log_message(f"Primary click at {elapsed:.1f}s at fixed coordinates ({self.primary_click_x}, {self.primary_click_y})"))
+                        except Exception as e:
+                            if hasattr(self, 'root') and self.root.winfo_exists():
+                                self.root.after(0, lambda: self.log_message(f"Error in primary click: {e}"))
                     else:
                         # Use current mouse position
-                        current_x, current_y = pyautogui.position()
-                        pyautogui.click(current_x, current_y)
-                        self.root.after(0, lambda: self.log_message(f"Primary click at {elapsed:.1f}s at mouse position ({current_x}, {current_y})"))
+                        try:
+                            current_x, current_y = pyautogui.position()
+                            pyautogui.click(current_x, current_y)
+                            if hasattr(self, 'root') and self.root.winfo_exists():
+                                self.root.after(0, lambda: self.log_message(f"Primary click at {elapsed:.1f}s at mouse position ({current_x}, {current_y})"))
+                        except Exception as e:
+                            if hasattr(self, 'root') and self.root.winfo_exists():
+                                self.root.after(0, lambda: self.log_message(f"Error in primary click: {e}"))
                     last_click_time = elapsed
             time.sleep(0.01)
     
@@ -727,9 +738,13 @@ class AutoclickerGUI:
     
     def log_message(self, message):
         """Add message to status log."""
-        timestamp = time.strftime("%H:%M:%S")
-        self.status_text.insert(tk.END, f"[{timestamp}] {message}\n")
-        self.status_text.see(tk.END)
+        try:
+            timestamp = time.strftime("%H:%M:%S")
+            self.status_text.insert(tk.END, f"[{timestamp}] {message}\n")
+            self.status_text.see(tk.END)
+        except:
+            # GUI might be destroyed, ignore logging errors
+            pass
     
     def toggle_recording(self):
         """Toggle recording on/off."""
