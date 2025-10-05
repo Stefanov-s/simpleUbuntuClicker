@@ -337,9 +337,9 @@ class AutoclickerGUI:
         self.primary_status_label.configure(foreground="green")
         self.primary_button.configure(text="Stop Primary")
         
-        # Start primary thread
-        self.primary_thread = threading.Thread(target=self.primary_click_thread, daemon=True)
-        self.primary_thread.start()
+        # Start master timer thread
+        self.master_thread = threading.Thread(target=self.master_timer_thread, daemon=True)
+        self.master_thread.start()
         
         self.log_message("Primary clicker started")
         self.update_stop_all_button()
@@ -383,9 +383,7 @@ class AutoclickerGUI:
         self.secondary_status_label.configure(foreground="green")
         self.secondary_button.configure(text="Stop Secondary")
         
-        # Start secondary thread
-        self.secondary_thread = threading.Thread(target=self.secondary_click_thread, daemon=True)
-        self.secondary_thread.start()
+        # Master timer thread already running, no need to start new thread
         
         self.log_message("Secondary clicker started")
         self.update_stop_all_button()
@@ -429,9 +427,7 @@ class AutoclickerGUI:
         self.tertiary_status_label.configure(foreground="green")
         self.tertiary_button.configure(text="Stop Tertiary")
         
-        # Start tertiary thread
-        self.tertiary_thread = threading.Thread(target=self.tertiary_click_thread, daemon=True)
-        self.tertiary_thread.start()
+        # Master timer thread already running, no need to start new thread
         
         self.log_message("Tertiary clicker started")
         self.update_stop_all_button()
@@ -657,69 +653,56 @@ class AutoclickerGUI:
         self.log_message("All clickers stopped")
     
     
-    def primary_click_thread(self):
-        """Thread function for primary autoclicker."""
-        last_click_time = 0
-        while self.primary_active:
+    def master_timer_thread(self):
+        """Master timer thread that handles all clickers."""
+        last_primary_click = 0
+        last_secondary_click = 0
+        last_tertiary_click = 0
+        
+        while self.primary_active or self.secondary_active or self.tertiary_active:
             if self.start_time is not None:
                 current_time = time.time()
                 elapsed = current_time - self.start_time
-                if elapsed % self.primary_interval < 0.1 and elapsed - last_click_time >= self.primary_interval * 0.9:
-                    if self.primary_use_coordinates:
-                        # Use fixed coordinates
-                        pyautogui.click(self.primary_click_x, self.primary_click_y)
-                        self.root.after(0, lambda: self.log_message(f"Primary click at {elapsed:.1f}s at fixed coordinates ({self.primary_click_x}, {self.primary_click_y})"))
-                    else:
-                        # Use current mouse position
-                        current_x, current_y = pyautogui.position()
-                        pyautogui.click(current_x, current_y)
-                        self.root.after(0, lambda: self.log_message(f"Primary click at {elapsed:.1f}s at mouse position ({current_x}, {current_y})"))
-                    last_click_time = elapsed
+                
+                # Primary clicker (master timing)
+                if self.primary_active:
+                    if elapsed % self.primary_interval < 0.1 and elapsed - last_primary_click >= self.primary_interval * 0.9:
+                        if self.primary_use_coordinates:
+                            pyautogui.click(self.primary_click_x, self.primary_click_y)
+                            self.root.after(0, lambda: self.log_message(f"Primary click at {elapsed:.1f}s at fixed coordinates ({self.primary_click_x}, {self.primary_click_y})"))
+                        else:
+                            current_x, current_y = pyautogui.position()
+                            pyautogui.click(current_x, current_y)
+                            self.root.after(0, lambda: self.log_message(f"Primary click at {elapsed:.1f}s at mouse position ({current_x}, {current_y})"))
+                        last_primary_click = elapsed
+                
+                # Secondary clicker (delta from primary)
+                if self.secondary_active:
+                    secondary_trigger_time = (elapsed % self.primary_interval) - self.secondary_interval
+                    if abs(secondary_trigger_time) < 0.1 and elapsed - last_secondary_click >= self.primary_interval * 0.9:
+                        if self.secondary_use_coordinates:
+                            pyautogui.click(self.secondary_click_x, self.secondary_click_y)
+                            self.root.after(0, lambda: self.log_message(f"Secondary click at {elapsed:.1f}s at fixed coordinates ({self.secondary_click_x}, {self.secondary_click_y})"))
+                        else:
+                            current_x, current_y = pyautogui.position()
+                            pyautogui.click(current_x, current_y)
+                            self.root.after(0, lambda: self.log_message(f"Secondary click at {elapsed:.1f}s at mouse position ({current_x}, {current_y})"))
+                        last_secondary_click = elapsed
+                
+                # Tertiary clicker (delta from primary)
+                if self.tertiary_active:
+                    tertiary_trigger_time = (elapsed % self.primary_interval) - self.tertiary_interval
+                    if abs(tertiary_trigger_time) < 0.1 and elapsed - last_tertiary_click >= self.primary_interval * 0.9:
+                        if self.tertiary_use_coordinates:
+                            pyautogui.click(self.tertiary_click_x, self.tertiary_click_y)
+                            self.root.after(0, lambda: self.log_message(f"Tertiary click at {elapsed:.1f}s at fixed coordinates ({self.tertiary_click_x}, {self.tertiary_click_y})"))
+                        else:
+                            current_x, current_y = pyautogui.position()
+                            pyautogui.click(current_x, current_y)
+                            self.root.after(0, lambda: self.log_message(f"Tertiary click at {elapsed:.1f}s at mouse position ({current_x}, {current_y})"))
+                        last_tertiary_click = elapsed
             time.sleep(0.01)
     
-    def secondary_click_thread(self):
-        """Thread function for secondary autoclicker."""
-        last_click_time = 0
-        while self.secondary_active:
-            if self.start_time is not None:
-                current_time = time.time()
-                elapsed = current_time - self.start_time
-                # Secondary clicks based on primary timing + delta
-                primary_cycle_time = elapsed % self.primary_interval
-                if primary_cycle_time >= self.secondary_interval and primary_cycle_time - last_click_time >= self.secondary_interval * 0.9:
-                    if self.secondary_use_coordinates:
-                        # Use fixed coordinates
-                        pyautogui.click(self.secondary_click_x, self.secondary_click_y)
-                        self.root.after(0, lambda: self.log_message(f"Secondary click at {elapsed:.1f}s at fixed coordinates ({self.secondary_click_x}, {self.secondary_click_y})"))
-                    else:
-                        # Use current mouse position
-                        current_x, current_y = pyautogui.position()
-                        pyautogui.click(current_x, current_y)
-                        self.root.after(0, lambda: self.log_message(f"Secondary click at {elapsed:.1f}s at mouse position ({current_x}, {current_y})"))
-                    last_click_time = primary_cycle_time
-            time.sleep(0.01)
-    
-    def tertiary_click_thread(self):
-        """Thread function for tertiary autoclicker."""
-        last_click_time = 0
-        while self.tertiary_active:
-            if self.start_time is not None:
-                current_time = time.time()
-                elapsed = current_time - self.start_time
-                # Tertiary clicks based on primary timing + delta
-                primary_cycle_time = elapsed % self.primary_interval
-                if primary_cycle_time >= self.tertiary_interval and primary_cycle_time - last_click_time >= self.tertiary_interval * 0.9:
-                    if self.tertiary_use_coordinates:
-                        # Use fixed coordinates
-                        pyautogui.click(self.tertiary_click_x, self.tertiary_click_y)
-                        self.root.after(0, lambda: self.log_message(f"Tertiary click at {elapsed:.1f}s at fixed coordinates ({self.tertiary_click_x}, {self.tertiary_click_y})"))
-                    else:
-                        # Use current mouse position
-                        current_x, current_y = pyautogui.position()
-                        pyautogui.click(current_x, current_y)
-                        self.root.after(0, lambda: self.log_message(f"Tertiary click at {elapsed:.1f}s at mouse position ({current_x}, {current_y})"))
-                    last_click_time = primary_cycle_time
-            time.sleep(0.01)
     
     def update_stop_all_button(self):
         """Update stop all button state."""
