@@ -102,14 +102,39 @@ class AutoclickerGUI:
         primary_row.grid(row=0, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 5))
         primary_row.columnconfigure(1, weight=1)
         
+        # Primary interval
+        ttk.Label(primary_row, text="Interval (seconds):").grid(row=0, column=0, sticky=tk.W, padx=(0, 10))
+        self.primary_interval_var = tk.StringVar(value="5")
+        primary_spinbox = ttk.Spinbox(primary_row, from_=1, to=3600, width=10, 
+                                    textvariable=self.primary_interval_var)
+        primary_spinbox.grid(row=0, column=1, sticky=tk.W)
+        
+        # Primary coordinate settings
+        coord_frame = ttk.Frame(primary_row)
+        coord_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(5, 0))
+        
+        self.primary_coord_var = tk.BooleanVar()
+        coord_check = ttk.Checkbutton(coord_frame, text="Use fixed coordinates",
+                                     variable=self.primary_coord_var, command=self.toggle_primary_coords)
+        coord_check.grid(row=0, column=0, sticky=tk.W)
+        
+        self.primary_coord_button = ttk.Button(coord_frame, text="Set Coordinates", 
+                                             command=self.set_primary_coordinates, state="disabled")
+        self.primary_coord_button.grid(row=0, column=1, sticky=tk.E, padx=(10, 0))
+        
+        self.primary_coord_label = ttk.Label(coord_frame, text="Coordinates: Not set", 
+                                           font=("Arial", 9), foreground="gray")
+        self.primary_coord_label.grid(row=1, column=0, columnspan=2, sticky=tk.W, pady=(2, 0))
+        
+        # Primary status and control
         self.primary_status_var = tk.StringVar(value="OFF")
         self.primary_status_label = ttk.Label(primary_row, textvariable=self.primary_status_var, 
                                               font=("Arial", 12, "bold"))
-        self.primary_status_label.grid(row=0, column=0, sticky=tk.W)
+        self.primary_status_label.grid(row=2, column=0, sticky=tk.W, pady=(5, 0))
         
         self.primary_button = ttk.Button(primary_row, text="Start Primary", 
                                         command=self.toggle_primary)
-        self.primary_button.grid(row=0, column=1, sticky=tk.E, padx=(10, 0))
+        self.primary_button.grid(row=2, column=1, sticky=tk.E, pady=(5, 0))
         
         # Secondary Clicker (Collapsible)
         self.secondary_enabled_var = tk.BooleanVar()
@@ -222,6 +247,13 @@ class AutoclickerGUI:
         repeat_spinbox = ttk.Spinbox(playback_frame, from_=1, to=1000, width=10,
                                     textvariable=self.repeat_var)
         repeat_spinbox.grid(row=0, column=1, sticky=tk.W)
+        
+        # Replay interval
+        ttk.Label(playback_frame, text="Interval between replays (seconds):").grid(row=1, column=0, sticky=tk.W, padx=(0, 10), pady=(5, 0))
+        self.replay_interval_var = tk.StringVar(value="0")
+        replay_interval_spinbox = ttk.Spinbox(playback_frame, from_=0, to=3600, width=10,
+                                            textvariable=self.replay_interval_var)
+        replay_interval_spinbox.grid(row=1, column=1, sticky=tk.W, pady=(5, 0))
         
         # Play button
         self.play_button = ttk.Button(playback_frame, text="Play Sequence", 
@@ -795,8 +827,9 @@ class AutoclickerGUI:
         
         try:
             self.replay_count = int(self.repeat_var.get())
+            self.replay_interval = int(self.replay_interval_var.get())
         except ValueError:
-            messagebox.showerror("Error", "Please enter a valid repeat count!")
+            messagebox.showerror("Error", "Please enter valid numbers for repeat count and interval!")
             return
         
         self.playing = True
@@ -847,8 +880,8 @@ class AutoclickerGUI:
                 self.root.after(0, lambda i=i: self.log_message(f"Playback click {i+1} at ({self.recorded_clicks[i]['x']}, {self.recorded_clicks[i]['y']})"))
             
             # Wait between repetitions (if not last)
-            if replay < self.replay_count - 1:
-                time.sleep(0.5)  # Small delay between repetitions
+            if replay < self.replay_count - 1 and self.replay_interval > 0:
+                time.sleep(self.replay_interval)
         
         # Playback finished
         self.root.after(0, self.stop_playback)
