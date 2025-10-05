@@ -21,7 +21,7 @@ class AutoclickerGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Simple Autoclicker for Ubuntu")
-        self.root.geometry("500x400")
+        self.root.geometry("600x500")
         self.root.resizable(True, True)
         
         # Detect platform
@@ -123,6 +123,14 @@ class AutoclickerGUI:
         self.emergency_button = ttk.Button(control_frame, text="Emergency Stop", 
                                           command=self.emergency_stop)
         self.emergency_button.pack(side=tk.LEFT)
+        
+        # Add tooltips/help text
+        help_frame = ttk.Frame(main_frame)
+        help_frame.grid(row=5, column=0, columnspan=3, pady=(10, 0))
+        
+        help_text = ttk.Label(help_frame, text="Stop All: Gracefully stops all clickers | Emergency Stop: Instantly stops everything with confirmation", 
+                             font=("Arial", 9), foreground="gray")
+        help_text.pack()
         
         # Status Section
         status_frame = ttk.LabelFrame(main_frame, text="Status", padding="10")
