@@ -237,6 +237,7 @@ class AutoclickerGUI:
                                       command=self.clear_sequence, state="disabled")
         self.clear_button.grid(row=0, column=2, sticky=tk.E)
         
+        
         # Sequence display
         seq_frame = ttk.LabelFrame(recorder_frame, text="Recorded Sequence", padding="10")
         seq_frame.grid(row=2, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 10))
@@ -290,7 +291,7 @@ class AutoclickerGUI:
         
         # Hotkey info
         hotkey_text = ttk.Label(instructions_frame, 
-                               text="Hotkeys: F3 = Start/Stop Recording, F4 = Start/Stop Playback",
+                               text="Hotkeys: F3 = Start/Stop Recording, F4 = Start/Stop Playback (Ubuntu optimized)",
                                font=("Arial", 9), foreground="blue")
         hotkey_text.pack()
         
@@ -598,6 +599,7 @@ class AutoclickerGUI:
         from pynput import mouse
         self.click_listener = mouse.Listener(on_click=on_click)
         self.click_listener.start()
+        self.log_message("Click listener started successfully")
     
     def update_sequence_display(self):
         """Update the sequence display."""
@@ -622,6 +624,7 @@ class AutoclickerGUI:
         self.sequence_text.configure(state="disabled")
         self.play_button.configure(state="disabled")
         self.log_message("Sequence cleared")
+    
     
     def toggle_playback(self):
         """Toggle playback on/off."""
