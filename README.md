@@ -53,11 +53,30 @@ A lightweight, terminal-based autoclicker application for Ubuntu that performs m
 
 ## Usage
 
-1. **Run the application**:
+### GUI Version (Recommended)
+1. **Run the GUI application**:
+   ```bash
+   python3 autoclicker_gui.py
+   ```
+   Or use the launcher:
+   ```bash
+   python3 run_autoclicker.py
+   ```
+
+### Terminal Version
+1. **Run the terminal application**:
    ```bash
    python3 autoclicker.py
    ```
 
+### GUI Features
+- **Visual Controls**: Start/stop buttons for both clickers
+- **Interval Settings**: Easy spinbox controls for timing
+- **Real-time Status**: Live status display and logging
+- **Hotkey Support**: F1/F2 keys still work
+- **Cross-platform**: Works on Windows and Linux
+
+### Terminal Features
 2. **Configure intervals**:
    - Enter minutes and seconds for the primary clicker
    - Choose whether to enable a secondary clicker
