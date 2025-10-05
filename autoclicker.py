@@ -74,7 +74,7 @@ def get_user_input():
 
 def primary_click_thread():
     """Thread function for primary autoclicker."""
-    global first_clicker_active, start_time, mouse_x, mouse_y
+    global first_clicker_active, start_time
     last_click_time = 0
     while True:
         if first_clicker_active and start_time is not None:
@@ -82,14 +82,16 @@ def primary_click_thread():
             elapsed = current_time - start_time
             # Only click if enough time has passed since last click
             if elapsed % primary_interval < 0.1 and elapsed - last_click_time >= primary_interval * 0.9:
-                pyautogui.click(mouse_x, mouse_y)
+                # Get current mouse position instead of using stored position
+                current_x, current_y = pyautogui.position()
+                pyautogui.click(current_x, current_y)
                 last_click_time = elapsed
-                print(f"Primary click at {elapsed:.1f}s")
+                print(f"Primary click at {elapsed:.1f}s at position ({current_x}, {current_y})")
         time.sleep(0.01)
 
 def secondary_click_thread():
     """Thread function for secondary autoclicker."""
-    global second_clicker_active, start_time, mouse_x, mouse_y
+    global second_clicker_active, start_time
     last_click_time = 0
     while True:
         if second_clicker_active and start_time is not None:
@@ -97,9 +99,11 @@ def secondary_click_thread():
             elapsed = current_time - start_time
             # Only click if enough time has passed since last click
             if elapsed % secondary_interval < 0.1 and elapsed - last_click_time >= secondary_interval * 0.9:
-                pyautogui.click(mouse_x, mouse_y)
+                # Get current mouse position instead of using stored position
+                current_x, current_y = pyautogui.position()
+                pyautogui.click(current_x, current_y)
                 last_click_time = elapsed
-                print(f"Secondary click at {elapsed:.1f}s")
+                print(f"Secondary click at {elapsed:.1f}s at position ({current_x}, {current_y})")
         time.sleep(0.01)
 
 def on_key_press(key):
@@ -117,6 +121,8 @@ def on_key_press(key):
                 print("Primary clicker: ON")
             else:
                 print("Primary clicker: OFF")
+                # Reset start_time when turning off to ensure clean restart
+                start_time = None
                 
         elif key == keyboard.Key.f2 and secondary_interval is not None:
             second_clicker_active = not second_clicker_active
@@ -126,6 +132,9 @@ def on_key_press(key):
                 print("Secondary clicker: ON")
             else:
                 print("Secondary clicker: OFF")
+                # Reset start_time when turning off to ensure clean restart
+                if not first_clicker_active:
+                    start_time = None
                 
     except AttributeError:
         pass
