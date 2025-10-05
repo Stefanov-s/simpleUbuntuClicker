@@ -585,14 +585,14 @@ class AutoclickerGUI:
                 self.secondary_click_x = x
                 self.secondary_click_y = y
                 self.secondary_coord_label.configure(text=f"Coordinates: ({x}, {y})", foreground="green")
-        self.log_message(f"Secondary coordinates set to ({x}, {y})")
-        self.root.deiconify()  # Show window again
-        return False  # Stop listener
-    
-    # Start mouse listener
-    from pynput import mouse
-    listener = mouse.Listener(on_click=on_click)
-    listener.start()
+                self.log_message(f"Secondary coordinates set to ({x}, {y})")
+                self.root.deiconify()  # Show window again
+                return False  # Stop listener
+        
+        # Start mouse listener
+        from pynput import mouse
+        listener = mouse.Listener(on_click=on_click)
+        listener.start()
     
     def set_tertiary_coordinates(self):
         """Set tertiary clicker coordinates by clicking."""
