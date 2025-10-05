@@ -599,6 +599,7 @@ class AutoclickerGUI:
                 self.primary_click_y = y
                 self.primary_coord_label.configure(text=f"Coordinates: ({x}, {y})", foreground="green")
                 self.log_message(f"Primary coordinates set to ({x}, {y})")
+                self.log_message(f"DEBUG: Stored coordinates are now ({self.primary_click_x}, {self.primary_click_y})")
                 self.root.deiconify()  # Show window again
                 return False  # Stop listener
         
@@ -666,6 +667,7 @@ class AutoclickerGUI:
                 if elapsed % self.primary_interval < 0.1 and elapsed - last_click_time >= self.primary_interval * 0.9:
                     if self.primary_use_coordinates:
                         # Use fixed coordinates
+                        self.root.after(0, lambda: self.log_message(f"DEBUG: Using coordinates ({self.primary_click_x}, {self.primary_click_y})"))
                         pyautogui.click(self.primary_click_x, self.primary_click_y)
                         self.root.after(0, lambda: self.log_message(f"Primary click at {elapsed:.1f}s at fixed coordinates ({self.primary_click_x}, {self.primary_click_y})"))
                     else:
