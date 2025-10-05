@@ -25,23 +25,17 @@ echo $XDG_SESSION_TYPE
 
 ### 4. **Install tkinter** (GUI Framework)
 ```bash
-# For Ubuntu 20.04+
 sudo apt install python3-tk
-
-# For older Ubuntu versions
-sudo apt install python3-tkinter
 ```
 
-### 5. **Install Python Dependencies**
+### 5. **If you get "externally managed environment" error:**
 ```bash
-# Option 1: Virtual Environment (Recommended)
+# Use virtual environment (recommended)
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 
-# Option 2: System-wide (if virtual env fails)
-pip3 install --user -r requirements.txt
-# OR
+# OR use --break-system-packages
 pip3 install --break-system-packages -r requirements.txt
 ```
 
@@ -144,15 +138,16 @@ echo "Setup complete! Please reboot your system."
 echo "After reboot, run: python3 autoclicker_gui.py"
 ```
 
-## Button Differences Explained
+## Simple Setup for Existing Users
 
-### **Stop All Button:**
-- **What it does**: Gracefully stops all active clickers
-- **When enabled**: Only when at least one clicker is running
-- **Behavior**: Normal stop, no confirmation dialog
+If you already have the terminal version working:
 
-### **Emergency Stop Button:**
-- **What it does**: Instantly stops everything with confirmation
-- **When enabled**: Always available
-- **Behavior**: Shows confirmation dialog, then stops all clickers
-- **Use case**: When you need to stop immediately and confirm the action
+```bash
+# Just install tkinter
+sudo apt install python3-tk
+
+# Run the GUI
+python3 autoclicker_gui.py
+```
+
+That's it! No other changes needed.

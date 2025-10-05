@@ -117,20 +117,7 @@ class AutoclickerGUI:
         # Stop all button
         self.stop_all_button = ttk.Button(control_frame, text="Stop All", 
                                          command=self.stop_all, state="disabled")
-        self.stop_all_button.pack(side=tk.LEFT, padx=(0, 10))
-        
-        # Emergency stop button
-        self.emergency_button = ttk.Button(control_frame, text="Emergency Stop", 
-                                          command=self.emergency_stop)
-        self.emergency_button.pack(side=tk.LEFT)
-        
-        # Add tooltips/help text
-        help_frame = ttk.Frame(main_frame)
-        help_frame.grid(row=5, column=0, columnspan=3, pady=(10, 0))
-        
-        help_text = ttk.Label(help_frame, text="Stop All: Gracefully stops all clickers | Emergency Stop: Instantly stops everything with confirmation", 
-                             font=("Arial", 9), foreground="gray")
-        help_text.pack()
+        self.stop_all_button.pack(side=tk.LEFT)
         
         # Status Section
         status_frame = ttk.LabelFrame(main_frame, text="Status", padding="10")
@@ -152,7 +139,7 @@ class AutoclickerGUI:
         if self.platform == "linux":
             self.log_message("Move mouse to top-left corner for emergency stop")
         else:
-            self.log_message("Use Emergency Stop button or close window to stop")
+            self.log_message("Use Stop All button or close window to stop")
         
     def setup_keyboard_listener(self):
         """Setup keyboard listener for F1/F2 hotkeys."""
@@ -286,11 +273,6 @@ class AutoclickerGUI:
             self.stop_secondary()
         self.log_message("All clickers stopped")
     
-    def emergency_stop(self):
-        """Emergency stop - stop all and show confirmation."""
-        self.stop_all()
-        self.log_message("EMERGENCY STOP ACTIVATED")
-        messagebox.showinfo("Emergency Stop", "All clickers have been stopped!")
     
     def primary_click_thread(self):
         """Thread function for primary autoclicker."""
